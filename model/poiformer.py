@@ -116,12 +116,12 @@ class TADGAT(nn.Module):
         # edge_index, edge_type, t_offset, seq_ids, _ = adjs
         edge_index, edge_type, t_offset_full, dists_full, _ = adjs
 
-        emask = edge_type < 2
-        edge_index = edge_index[:, emask]
-        dist_mask = edge_type[edge_type != 1] < 2
-        edge_type = edge_type[emask]
-        t_offset_full = [t_offset_full[i][emask] for i in range(len(t_offset_full))]
-        dists_full = [dists_full[i][dist_mask] for i in range(len(dists_full))]
+        # emask = edge_type < 2
+        # edge_index = edge_index[:, emask]
+        # dist_mask = edge_type[edge_type != 1] < 2
+        # edge_type = edge_type[emask]
+        # t_offset_full = [t_offset_full[i][emask] for i in range(len(t_offset_full))]
+        # dists_full = [dists_full[i][dist_mask] for i in range(len(dists_full))]
 
         hetero_idx, homo_idx = (edge_type >= 2), (edge_type < 2)
         att_bias_set, emb_bias_set = [], []
