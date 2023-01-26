@@ -1,17 +1,17 @@
-CHECKPOINT_DIR='./ckpt_4sq'
-dataset='4sq'
+CHECKPOINT_DIR='./ckpt_4sq' 
+dataset='4sq'       # [gowalla, 4sq]
 if [ ! -d $CHECKPOINT_DIR ]
 then
     mkdir $CHECKPOINT_DIR
 fi
 
 mode='train'
-# mode='test'
+# mode='test'   # Uncomment this line if you test model
 
 gpu_id=0
 layer_num=2
 max_len=50
-input_dim=64
+input_dim=64    # Do not change the input dimension
 hidden_channel=32
 batch_size=128
 lr=0.001
@@ -20,14 +20,14 @@ ubias_num=400   # 400 for 4sq, 180 for gow
 ibias_num=400   # 400 for 4sq, 180 for gow
 neg_sample_num=99
 
-eval_per_n=30000
+eval_per_n=30000    # Do not change
 epoch_num=20
 
 ssl_temp=0.5
 mtl_coef_1=0
 mtl_coef_2=0
 
-model='TADGAT_full_v2_wo_trans'
+model='TADGAT_full_v2'     # To train HST-HGAT, 'TADGAT' must be contained in model name
 # model='MF'
 # model='STP_UDGAT'
 # model='LSTM'

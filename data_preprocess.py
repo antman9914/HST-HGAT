@@ -886,6 +886,12 @@ def pkl2npy(dataset):
 
 
 def precompute_egonet(dataset, n_layer, seq_max_len, mode):
+    '''
+    dataset: ['gowalla', 'foursquare']
+    n_layer: fixed to 2 (If layer number > 2, the time complexity will be intolerable)
+    seq_max_len: the maximum neighbor sampled for each anchor node
+    mode: ['train', 'test']. Both mode need to be conducted for once
+    '''
     # TODO: add transition graph
     user_set, poi_set = pickle.load(open(dataset+'_processed/seen_user.pkl', 'rb')), pickle.load(open(dataset+'_processed/seen_poi.pkl', 'rb'))
     user_num, poi_num = len(user_set), len(poi_set)
