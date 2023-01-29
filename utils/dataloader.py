@@ -65,11 +65,12 @@ class POI_Loader(DataLoader):
 
         # TODO: change dataset setting
         if mode == 'train':
-            egonet_data = pickle.load(open(root + 'train_ego_list_hetero_poi_geo_v2.pkl', 'rb'))
+            egonet_data = pickle.load(open(root + 'train_ego_list_v2.pkl', 'rb'))
         elif mode == 'val':
-            egonet_data = pickle.load(open(root + 'val_ego_list_hetero_poi_geo_v2.pkl', 'rb'))
+            # egonet_data = pickle.load(open(root + 'val_ego_list_hetero_poi_geo_v2.pkl', 'rb'))
+            egonet_data = pickle.load(open(root + 'val_ego_list_v2.pkl', 'rb'))
         else:
-            egonet_data = pickle.load(open(root + 'test_ego_list_hetero_poi_geo_v2.pkl', 'rb'))
+            egonet_data = pickle.load(open(root + 'test_ego_list_v2.pkl', 'rb'))
             # Last version: hetero_poi_geo_v2
         
         # ego_nets, involved_uid = egonet_data
@@ -181,9 +182,9 @@ class POI_Loader(DataLoader):
             if adjs.orig_seq is not None:
                 dists = copy.deepcopy(adjs.orig_seq)
                 dists_1 = torch.clamp(dists * 10 // 1, max=500)
-                # dists_2 = torch.clamp(dists * 50 // 1, max=500)
+                dists_2 = torch.clamp(dists * 2 // 1, max=500)
                 full_dists.append(dists_1)
-                # full_dists_2.append(dists_2)
+                full_dists_2.append(dists_2)
             
             # if soc_adjs is not None:
             #     soc_nid = torch.tensor(soc_nid, dtype=torch.int64)
@@ -336,7 +337,7 @@ class POI_Loader(DataLoader):
         full_node_idx = torch.cat(full_node_idx)
         if len(full_dists) != 0:
             full_dists = torch.cat(full_dists)
-            # full_dists_2 = torch.cat(full_dists_2)
+            full_dists_2 = torch.cat(full_dists_2)
         else:
             full_dists, full_dists_2 = None, None
         # full_orig_seqs = torch.cat(full_orig_seqs, dim=0)

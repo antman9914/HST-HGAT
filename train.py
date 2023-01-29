@@ -55,23 +55,23 @@ class LstmStrategy():
         return (h,c)
 
 
-class CELoss(nn.Module):
-    def __init__(self, label_smooth=None):
-        super().__init__()
-        self.label_smooth = label_smooth
+# class CELoss(nn.Module):
+#     def __init__(self, label_smooth=None):
+#         super().__init__()
+#         self.label_smooth = label_smooth
 
-    def forward(self, pred, target):
-        eps = 1e-12
-        class_num = pred.size(-1)
-        if self.label_smooth is not None:
-            logprobs = F.log_softmax(pred, dim=1)
-            target = F.one_hot(target, pred.size(-1)).to(device)
-            target = torch.clamp(target.float(), min=self.label_smooth/(class_num-1), max=1.0-self.label_smooth)
-            loss = -1*torch.sum(target*logprobs, 1)
+#     def forward(self, pred, target):
+#         eps = 1e-12
+#         class_num = pred.size(-1)
+#         if self.label_smooth is not None:
+#             logprobs = F.log_softmax(pred, dim=1)
+#             target = F.one_hot(target, pred.size(-1)).to(device)
+#             target = torch.clamp(target.float(), min=self.label_smooth/(class_num-1), max=1.0-self.label_smooth)
+#             loss = -1*torch.sum(target*logprobs, 1)
         
-        else:
-            loss = -1.*pred.gather(1, target.unsqueeze(-1)) + torch.log(torch.exp(pred+eps).sum(dim=1))
-        return loss.mean()
+#         else:
+#             loss = -1.*pred.gather(1, target.unsqueeze(-1)) + torch.log(torch.exp(pred+eps).sum(dim=1))
+#         return loss.mean()
 
 
 parser = argparse.ArgumentParser()
@@ -206,7 +206,8 @@ if args.mode == 'train':
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20, 30], gamma=0.4)
     scaler = amp.GradScaler(enabled=enable_amp)
 
-    criterion = CELoss(label_smooth=0.05)
+    # criterion = CELoss(label_smooth=0.05)
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.05)
 
 
 def train(best_ndcg, best_hr):
@@ -240,21 +241,21 @@ def train(best_ndcg, best_hr):
         # lat_emb_idx, lon_emb_idx = lat_emb_idx.to(device), lon_emb_idx.to(device)
 
         with amp.autocast(enabled=enable_amp):
-            logits, pref_bound = model(adjs, node_idx, orig_seqs, time_diff, seq_lens, center_nid, device, train_loader.soc_edges)
+            logits = model(adjs, node_idx, orig_seqs, time_diff, seq_lens, center_nid, device, train_loader.soc_edges)
             # logits = model(adjs, node_idx, orig_seqs, time_diff, seq_lens, center_nid, device, soc_adjs, soc_node_idx, soc_cnid)
             
             # Code for ranking-based loss
-            loss = 0.
-            for k in range(logits.size(0)):
-                pos_logit = logits[k, label[k]]
-                neg_logit = torch.cat([logits[k, :label[k]], logits[k, (label[k]+1):]])
-                # pos_loss = F.logsigmoid(pos_logit - pref_bound[k])
-                # neg_loss = F.logsigmoid(pref_bound[k] - neg_logit).mean()
-                pos_loss = F.logsigmoid(pos_logit)
-                neg_loss = F.logsigmoid(-neg_logit).mean()
-                loss += - pos_loss - neg_loss
-            loss /= logits.size(0)
-            # loss = criterion(logits, label) # + args.mtl_coef_1 * mtl_loss_1
+            # loss = 0.
+            # for k in range(logits.size(0)):
+            #     pos_logit = logits[k, label[k]]
+            #     neg_logit = torch.cat([logits[k, :label[k]], logits[k, (label[k]+1):]])
+            #     # pos_loss = F.logsigmoid(pos_logit - pref_bound[k])
+            #     # neg_loss = F.logsigmoid(pref_bound[k] - neg_logit).mean()
+            #     pos_loss = F.logsigmoid(pos_logit)
+            #     neg_loss = F.logsigmoid(-neg_logit).mean()
+            #     loss += - pos_loss - neg_loss
+            # loss /= logits.size(0)
+            loss = criterion(logits, label) # + args.mtl_coef_1 * mtl_loss_1
             # new_end = time.time()
             # print(new_end - end)
         if np.isnan(loss.detach().cpu()):
@@ -304,11 +305,12 @@ def train(best_ndcg, best_hr):
     end = time.time()
     print("time consumption: %.4f" % (end - start))
     print("Test result on validation set: HR@1 %.4f, HR@5 %.4f, HR@10 %.4f, MRR: %.4f, NDCG: %.4f" % (hr_1, hr_5, hr_10, mrr, ndcg))
-    if ndcg > best_ndcg or hr_10 > best_hr:
-        if ndcg > best_ndcg:
-            best_ndcg = ndcg
-        else:
-            best_hr = hr_10
+    if mrr > best_ndcg: # or hr_10 > best_hr:
+        # if ndcg > best_ndcg:
+        #     best_ndcg = ndcg
+        # else:
+        #     best_hr = hr_10
+        best_ndcg = mrr
         print("New best model saved")
         torch.save(model.state_dict(), checkpoint_path)    
     return best_ndcg, best_hr

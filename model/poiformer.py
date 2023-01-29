@@ -56,12 +56,14 @@ class TADGAT(nn.Module):
 
         self.trans_head = nn.Parameter(torch.Tensor(in_channel, hidden_channel*heads))
         # self.soc_trans_head = nn.Parameter(torch.Tensor(hidden_channel*heads, hidden_channel*heads*num_layer+self.in_channel))
-        self.bound_vec = nn.Parameter(torch.Tensor(self.in_channel, 1))
+        # self.bound_vec = nn.Parameter(torch.Tensor(self.in_channel, 1))
         # self.bound_vec = nn.Parameter(torch.Tensor(heads*hidden_channel*num_layer+self.in_channel, 1))
         self.unified_map = nn.Linear(heads*hidden_channel*num_layer, in_channel, bias=False)
         self.rnn_update = nn.Linear(heads*hidden_channel*2, heads*hidden_channel, bias=False)
-        self.pred_head = nn.Sequential(nn.Linear(hidden_channel*heads*(num_layer)+self.in_channel, hidden_channel*heads), nn.LeakyReLU(negative_slope=0.2), nn.Dropout(p=0.3), nn.Linear(hidden_channel*heads, self.in_channel))
-        # self.pred_head = nn.Sequential(nn.Linear(hidden_channel*heads*(num_layer)+self.in_channel, hidden_channel*heads), nn.LeakyReLU(negative_slope=0.2), nn.Dropout(p=0.3), nn.Linear(hidden_channel*heads, item_num))
+        # self.pred_head = nn.Sequential(nn.Linear(hidden_channel*heads*(num_layer)+self.in_channel, hidden_channel*heads), nn.LeakyReLU(negative_slope=0.2), nn.Dropout(p=0.3), nn.Linear(hidden_channel*heads, self.in_channel))
+        
+        self.pred_head = nn.Sequential(nn.Linear(hidden_channel*heads*(num_layer)+self.in_channel, hidden_channel*heads), nn.LeakyReLU(negative_slope=0.2), nn.Dropout(p=0.3), nn.Linear(hidden_channel*heads, item_num))
+        # self.pred_head = nn.Linear(hidden_channel*heads*(num_layer)+self.in_channel, item_num)
         self.convs = nn.ModuleList()
         for i in range(num_layer):
             in_channel = in_channel if i == 0 else heads * hidden_channel
@@ -81,7 +83,7 @@ class TADGAT(nn.Module):
     def reset_parameters(self):
         glorot(self.trans_head)
         # glorot(self.soc_trans_head)
-        glorot(self.bound_vec)
+        # glorot(self.bound_vec)
 
         glorot(self.ucenter_att_bias)
         glorot(self.ucenter_emb_bias)
@@ -116,6 +118,7 @@ class TADGAT(nn.Module):
         # edge_index, edge_type, t_offset, seq_ids, _ = adjs
         edge_index, edge_type, t_offset_full, dists_full, _ = adjs
 
+        # # emask = edge_type != 1
         # emask = edge_type < 2
         # edge_index = edge_index[:, emask]
         # dist_mask = edge_type[edge_type != 1] < 2
@@ -253,9 +256,9 @@ class TADGAT(nn.Module):
         #     # x = x + soc_bias @ self.soc_trans_head
         
         logits = self.pred_head(x)
-        pref_bound = self.id_emb[node_idx[center_nid]] @ self.bound_vec
-        # pref_bound = x @ self.bound_vec
-        logits = logits @ self.id_emb[self.user_num:].T
+        # pref_bound = self.id_emb[node_idx[center_nid]] @ self.bound_vec
+        # # pref_bound = x @ self.bound_vec
+        # logits = logits @ self.id_emb[self.user_num:].T
 
         # # TODO: code for MTL
         # if self.training:
@@ -321,10 +324,12 @@ class TADGAT(nn.Module):
         #     # mtl_loss_1 = self.infonce(hinter_x, trans_x) + self.infonce(trans_x, hinter_x)
         #     return logits, mtl_loss_1 
         # else:
-        if self.training:
-            return logits, pref_bound
-        else:
-            return logits
+
+        
+        # if self.training:
+        #     return logits, pref_bound
+        # else:
+        return logits
     
     def infonce(self, out_1, out_2):
         pos_score = (out_1 * out_2).sum(-1)

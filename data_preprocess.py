@@ -1070,7 +1070,7 @@ def subgraph_sample(poi_seqs, user_num, poi_num, seq_max_len, n_layer, involved_
             cur_pred_ts, cur_target = lbl_ts[idx], lbl_traj[idx]
             real_start = idx - seq_max_len if idx >= seq_max_len else 0
             used_traj, used_ts_known = cur_traj[real_start:(idx+1)], cur_ts_line[real_start:(idx+1)]
-            assert len(used_traj) < 55
+            assert len(used_traj) < seq_max_len + 5
 
             edge_index, t_offset, edge_type = [], [], []
             cur_adjs = []
@@ -1150,7 +1150,7 @@ def subgraph_sample(poi_seqs, user_num, poi_num, seq_max_len, n_layer, involved_
                                 continue
                             real_start = t_idx - seq_max_len if t_idx >= seq_max_len else 0
                             cur_seq, cur_ts = cur_seq[real_start:t_idx], cur_ts[real_start:t_idx]
-                            assert len(cur_seq) < 55
+                            assert len(cur_seq) < seq_max_len + 5
                             for i in range(len(cur_seq)):
                                 edge_index.append([cur_seq[i], node + user_num])
                                 edge_type.append(1)
@@ -1208,7 +1208,7 @@ def subgraph_sample(poi_seqs, user_num, poi_num, seq_max_len, n_layer, involved_
                                 continue
                             real_start = max(t_idx - seq_max_len, 0)
                             cur_seq, cur_ts = cur_seq[real_start:t_idx], cur_ts[real_start:t_idx]
-                            assert len(cur_seq) < 55
+                            assert len(cur_seq) < seq_max_len + 5
                             for i in range(len(cur_seq)):
                                 poi_id = cur_seq[i]
                                 edge_index.append([poi_id + user_num, node])
